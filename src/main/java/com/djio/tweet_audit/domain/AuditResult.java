@@ -7,5 +7,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class AuditResult {
-    private
+    private String tweetUrl;
+    private boolean flagged;
+    private String reason;
 }
