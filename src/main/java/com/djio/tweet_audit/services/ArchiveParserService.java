@@ -44,9 +44,9 @@ public class ArchiveParserService {
                 tweet.setTweetUrl(
                         "https://x.com/i/web/status/" + tweet.getId()
                 );
+                tweets.add(tweet);
             }
         }
-
         return tweets;
     }
 }
