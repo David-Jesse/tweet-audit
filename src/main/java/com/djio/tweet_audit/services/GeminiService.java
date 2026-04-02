@@ -18,27 +18,59 @@ public class GeminiService {
     private final RestClient restClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private static final int MAX_RETRIES = 3;
+    private static final long INITIAL_BACKOFF_MS = 2000;
+
     public GeminiService(RestClient geminiRestClient) {
         this.restClient = geminiRestClient;
     }
 
     public AuditResult evaluate(Tweet tweet, AlignmentCriteria criteria) {
-        try {
-            String requestBody = buildRequestBody(tweet, criteria);
+        int attempts = 0;
+        long backoffMs = INITIAL_BACKOFF_MS;
 
-            String response = restClient.post()
-                    .body(requestBody)
-                    .retrieve()
-                    .body(String.class);
+        while (attempts < MAX_RETRIES) {
+            try {
+                String requestBody = buildRequestBody(tweet, criteria);
 
-            return parseResponse(response, tweet.getTweetUrl());
-        } catch (Exception e) {
+                String response = restClient.post()
+                        .body(requestBody)
+                        .retrieve()
+                        .body(String.class);
 
-            log.error("Gemini evaluation failed for tweet {}: {}",
-                    tweet.getId(), e.getMessage());
-            return new AuditResult(tweet.getTweetUrl(), false,
-                    "Evaluation failed: " + e.getMessage());
+                return parseResponse(response, tweet.getTweetUrl());
+            } catch (Exception e) {
+                attempts++;
+                boolean isRetryable = e.getMessage() != null &&
+                        (e.getMessage().contains("503") ||
+                                e.getMessage().contains("429") ||
+                                e.getMessage().contains("500")
+                        );
+
+                if (!isRetryable || attempts >= MAX_RETRIES) {
+                    log.error("Gemini evaluation failed for tweet {} after {} attempt(s): {}",
+                            tweet.getId(), attempts, e.getMessage());
+                    return new AuditResult(tweet.getTweetUrl(), false,
+                            "Evaluation failed: " + e.getMessage()
+                    );
+                }
+
+                log.warn("Gemini returned retryable error for tweet {}. " +
+                                "Attempts {}/{}. Retrying in {}ms...",
+                        tweet.getId(), attempts, MAX_RETRIES, backoffMs
+                );
+
+                try {
+                    Thread.sleep(backoffMs);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                }
+                // Doubles the wait each time a retry happens
+                backoffMs *= 2;
+            }
         }
+
+        return new AuditResult(tweet.getTweetUrl(), false, "Max retries exceeded");
     }
 
     private String buildRequestBody(Tweet tweet, AlignmentCriteria criteria) {
