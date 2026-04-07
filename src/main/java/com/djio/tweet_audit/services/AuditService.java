@@ -19,12 +19,15 @@ public class AuditService {
 
     private final ArchiveParserService archiveParserService;
     private final GeminiService geminiService;
+    private final CsvExportService csvExportService;
 
     public AuditService(ArchiveParserService archiveParserService,
-                        GeminiService geminiService
+                        GeminiService geminiService,
+                        CsvExportService csvExportService
     ) {
         this.archiveParserService = archiveParserService;
         this.geminiService = geminiService;
+        this.csvExportService = csvExportService;
     }
 
     public List<AuditResult> runAudit(String archivePath, AlignmentCriteria criteria) throws Exception {
@@ -32,7 +35,7 @@ public class AuditService {
         // Parse the archive
         log.info("Parsing archive from: {}", archivePath);
         List<Tweet> tweets = archiveParserService.parse(archivePath);
-        log.info("Found {} tweet to evaluate", tweets.size());
+        log.info("Found {} tweets to evaluate", tweets.size());
 
         // Evaluate each tweet sequentially
         List<AuditResult> flaggedResults = new ArrayList<>();
@@ -58,7 +61,8 @@ public class AuditService {
         log.info("Audit complete. {}/{} tweet flagged.",
                 flaggedResults.size(), tweets.size()
         );
-
+        String csvPath = csvExportService.export(flaggedResults, "output/flagged_tweets.csv");
+        log.info("Results saved to: {}", csvPath);
         return flaggedResults;
     }
 }
