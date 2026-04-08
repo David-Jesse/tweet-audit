@@ -35,6 +35,7 @@ public class AuditService {
         // Parse the archive
         log.info("Parsing archive from: {}", archivePath);
         List<Tweet> tweets = archiveParserService.parse(archivePath);
+//        tweets = tweets.subList(0, Math.min(15, tweets.size()));
         log.info("Found {} tweets to evaluate", tweets.size());
 
         // Evaluate each tweet sequentially
