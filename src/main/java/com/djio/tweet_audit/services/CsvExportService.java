@@ -1,6 +1,5 @@
 package com.djio.tweet_audit.services;
 
-
 import com.djio.tweet_audit.domain.AuditResult;
 import com.opencsv.CSVWriter;
 import org.slf4j.Logger;

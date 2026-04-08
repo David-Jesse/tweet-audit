@@ -5,6 +5,8 @@ target/
 !**/src/test/**/target/
 
 application.properties
+archive/
+output/
 
 ### STS ###
 .apt_generated
