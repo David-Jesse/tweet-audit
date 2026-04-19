@@ -5,6 +5,8 @@ import lombok.Data;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Data
+// if the JSON has fields i don't recognise this ignores it,
+// prevents errors when API returns extra data
 @JsonIgnoreProperties(ignoreUnknown =  true)
 public class Tweet {
 

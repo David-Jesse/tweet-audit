@@ -18,7 +18,7 @@ public class ArchiveParserService {
 
     public List<Tweet> parse(String filePath) throws IOException {
 
-        // Read the whole file into a string
+        // Read the whole file into a string and reads it as a text
         String raw = Files.readString(Path.of(filePath));
 
         // Here we remove the JS prefix by finding where the JSON array starts
